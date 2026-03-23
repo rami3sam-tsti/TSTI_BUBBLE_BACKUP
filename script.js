@@ -1,8 +1,10 @@
 const axios = require("axios");
 const dotenv = require("dotenv");
+const crypto = require("crypto");
 const { MongoClient } = require("mongodb");
 
 dotenv.config();
+debugger
 
 const MONGO_URI = process.env.MONGO_URI;
 const client = new MongoClient(MONGO_URI);
@@ -11,9 +13,13 @@ const config = [
   {
     APP_NAME: "TSTI",
     BASE_URL: "https://tsti.ae/version-test",
-    TABLES: ["Classes", "Trainees", "New Request"],
+    TABLES: ["Classes", "Trainees"],
   },
 ];
+
+function isString(value) {
+  return typeof value === "string" || value instanceof String;
+}
 
 // Add API keys and update base URL
 for (const conf of config) {
@@ -26,8 +32,10 @@ const LIMIT = 100; // optional max items per request
 async function fetchTableData(db, table, config) {
   const currentDatetime = new Date();
   const metadataCollection = db.collection("metadata");
+  const filesCollection = db.collection("files");
 
   let tableMetadata = await metadataCollection.findOne({ table });
+
 
   if (!tableMetadata) {
     tableMetadata = { table, lastModifiedDate: new Date(0).toISOString() };
@@ -67,7 +75,20 @@ async function fetchTableData(db, table, config) {
           { $push: { snapshots: { ...item, savedAt: currentDatetime.toISOString() } } },
           { upsert: true }
         );
+
+        for (value of Object.values(item)) {
+
+          if (isString(value) && (value.includes("cdn.bubble.io") || value.includes("s3.amazonaws.com"))) {
+            const hash = crypto.createHash("md5").update(value).digest("hex");
+            await filesCollection.updateOne(
+              { urlHash: hash, fileUrl: value },
+              {},
+              { upsert: true }
+            );
+          }
+        }
       }
+
 
       totalFetched += results.length;
       cursor += LIMIT;
