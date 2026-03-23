@@ -1,8 +1,11 @@
 const axios = require("axios");
 const dotenv = require("dotenv");
+const { MongoClient } = require("mongodb");
+
 dotenv.config();
 
-
+const MONGO_URI = process.env.MONGO_URI;
+const client = new MongoClient(MONGO_URI);
 
 const config = [{
   APP_NAME: "TSTI",
@@ -21,8 +24,11 @@ const API_KEY = process.env.API_KEY;
 const LIMIT = 100;
 
 async function fetchAllData(config) {
+  await client.connect();
+  const db = client.db(config.APP_NAME);
+  
   for (const table of config.TABLES) {
-    let results = [];
+    const collection = db.collection(table);
     let cursor = 0;
     let hasMore = true;
     try {
@@ -39,10 +45,7 @@ async function fetchAllData(config) {
 
         const data = response.data;
 
-        // Append results
-        results = results.concat(data.response.results);
-
-        console.log(`Fetched ${results.length} records so far...`);
+        await collection.insertMany(data.response.results);
 
         // Update cursor
         cursor += LIMIT;
