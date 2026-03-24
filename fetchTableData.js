@@ -1,33 +1,8 @@
 const axios = require("axios");
-const dotenv = require("dotenv");
+const { isString } = require("./utils");
 const crypto = require("crypto");
-const { MongoClient } = require("mongodb");
-
-dotenv.config();
-debugger
-
-const MONGO_URI = process.env.MONGO_URI;
-const client = new MongoClient(MONGO_URI);
-
-const config = [
-  {
-    APP_NAME: "TSTI",
-    BASE_URL: "https://tsti.ae/version-test",
-    TABLES: ["Classes", "Trainees"],
-  },
-];
-
-function isString(value) {
-  return typeof value === "string" || value instanceof String;
-}
-
-// Add API keys and update base URL
-for (const conf of config) {
-  conf.API_KEY = process.env[`${conf.APP_NAME}_API_KEY`];
-  conf.BASE_URL = `${conf.BASE_URL}/api/1.1/obj/`;
-}
-
-const LIMIT = 100; // optional max items per request
+const logger = require("./logger");
+const constants = require("./constants");
 
 async function fetchTableData(db, table, config) {
   const currentDatetime = new Date();
@@ -53,7 +28,7 @@ async function fetchTableData(db, table, config) {
         headers: { Authorization: `Bearer ${config.API_KEY}` },
         params: {
           cursor,
-          limit: LIMIT,
+          limit: constants.LIMIT,
           constraints: JSON.stringify([
             {
               key: "Modified Date",
@@ -82,7 +57,7 @@ async function fetchTableData(db, table, config) {
             const hash = crypto.createHash("md5").update(value).digest("hex");
             await filesCollection.updateOne(
               { urlHash: hash, fileUrl: value },
-              {},
+              { $set: { fileUrl: value } },
               { upsert: true }
             );
           }
@@ -91,11 +66,11 @@ async function fetchTableData(db, table, config) {
 
 
       totalFetched += results.length;
-      cursor += LIMIT;
+      cursor += constants.LIMIT;
       hasMore = response.data.response.remaining > 0;
 
       if (!hasMore) {
-        console.log(
+        logger.info(
           `[${config.APP_NAME} - ${table}] All data fetched! Total records: ${totalFetched}`
         );
         await metadataCollection.updateOne(
@@ -104,27 +79,10 @@ async function fetchTableData(db, table, config) {
         );
       }
     } catch (error) {
-      console.error("Error fetching data:", error.response?.data || error.message);
+      logger.error("Error fetching data:", error.response?.data || error.message);
       throw error;
     }
   }
 }
 
-async function fetchAllData(config) {
-  try {
-    await client.connect();
-    const db = client.db(config.APP_NAME);
-
-    for (const table of config.TABLES) {
-      await fetchTableData(db, table, config);
-    }
-  } catch (error) {
-    console.error("Failed:", error);
-    throw error;
-  } finally {
-    await client.close();
-  }
-}
-
-// Run the script
-fetchAllData(config[0]);
+module.exports = fetchTableData;

@@ -17,9 +17,19 @@
     "url": "https://github.com/rami3sam-tsti/TSTI_BUBBLE_BACKUP/issues"
   },
   "homepage": "https://github.com/rami3sam-tsti/TSTI_BUBBLE_BACKUP#readme",
+  "type": "commonjs",
   "dependencies": {
+    "@bull-board/api": "^6.20.6",
+    "@bull-board/express": "^6.20.6",
     "axios": "^1.13.6",
+    "bullmq": "^5.71.0",
     "dotenv": "^17.3.1",
-    "mongoose": "^9.3.1"
+    "express": "^5.2.1",
+    "ioredis": "^5.10.1",
+    "mongoose": "^9.3.1",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

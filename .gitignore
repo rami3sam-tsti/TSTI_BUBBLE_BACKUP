@@ -73,3 +73,5 @@ temp/
 *.bak
 
 package-lock.json
+
+app.log
