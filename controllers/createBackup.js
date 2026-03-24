@@ -8,7 +8,7 @@ const createBackup = async (req, res) => {
         if (!appConfig) throw new Error("App configuration not found");
 
         for (const table of appConfig.TABLES) {
-            await backupQueue.add(`backup:${appName}`, {
+            await backupQueue.add(`backup:${appName}:${table}`, {
                 tableInfo: { ...appConfig, TABLE_NAME: table }
             });
         }

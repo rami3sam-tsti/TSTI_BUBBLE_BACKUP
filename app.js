@@ -4,14 +4,13 @@ const config = require("./config");
 const logger = require("./logger");
 const express = require("express");
 const backupRoutes = require("./routes/backupRoutes");
-const fetchTableData = require("./fetchTableData");
-const CONSTANTS = require("./constants");
-const pullFiles = require("./pullFiles");
+const filesRoutes = require("./routes/filesRoutes");
+const constants = require("./constants");
 const backupWorker = require("./queues/backup/backupWorker");
+const pullFilesWorker = require("./queues/files/pullFilesWorker");
 const bullBoardRoutes = require("./routes/bullBoardRoutes");
 dotenv.config();
 debugger
-
 
 // async function pullAllFiles() {
 //   try {
@@ -40,6 +39,7 @@ const app = express();
 // });
 
 app.use(backupRoutes)
+app.use(filesRoutes)
 app.use("/admin/queues", bullBoardRoutes)
 
 app.use((err, req, res, next) => {
@@ -47,7 +47,7 @@ app.use((err, req, res, next) => {
   res.status(500).send("Something broke!");
 });
 
-app.listen(CONSTANTS.PORT, () => {
-  logger.info(`Server is running on port ${CONSTANTS.PORT}`);
+app.listen(constants.PORT, () => {
+  logger.info(`Server is running on port ${constants.PORT}`);
 });
 

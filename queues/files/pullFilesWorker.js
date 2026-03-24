@@ -1,21 +1,24 @@
 const { Worker } = require("bullmq");
 const constants = require("../../constants");
-const fetchTableData = require("../../fetchTableData");
 const logger = require("../../logger");
-const client = require("../../db")
+const client = require("../../db");
+const pullFiles = require("../../pullFiles");
 const worker = new Worker(
-  constants.BACKUP_QUEUE_NAME,
+  constants.PULL_FILE_QUEUE_NAME,
   async (job) => {
     logger.info(`Processing job: ${job.name}, ${job.data}`);
-    const config = job.data.config;
+    const appInfo = job.data.appInfo;
 
     await client.connect();
-    const db = client.db(config.APP_NAME);
-    logger.info(`Fetching data for table: ${config}`);
+    const db = client.db(appInfo.APP_NAME);
+    logger.info(`Fetching data for table: ${appInfo}`);
 
-    for (const table of config.TABLES) {
-      await fetchTableData(db, table, config);
-    }
+    await pullFiles(db, appInfo.APP_NAME, async (progress) => {
+      await job.updateProgress(progress);
+    });
+
+    logger.info(`Finished processing job: ${job.name}`);
+
   },
   {
     connection: {

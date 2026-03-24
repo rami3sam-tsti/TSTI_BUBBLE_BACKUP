@@ -13,7 +13,9 @@ const worker = new Worker(
     const db = client.db(tableInfo.APP_NAME);
     logger.info(`Fetching data for table: ${tableInfo}`);
 
-    await fetchTableData(db, tableInfo);
+    await fetchTableData(db, tableInfo, async (progress) => {
+      await job.updateProgress(progress);
+    });
 
   },
   {

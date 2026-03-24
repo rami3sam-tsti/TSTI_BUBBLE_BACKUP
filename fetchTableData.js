@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const logger = require("./logger");
 const constants = require("./constants");
 
-async function backupTableData(db, tableInfo) {
+async function backupTableData(db, tableInfo, updateProgress) {
   const currentDatetime = new Date();
   const metadataCollection = db.collection("metadata");
   const filesCollection = db.collection("files");
@@ -58,7 +58,7 @@ async function backupTableData(db, tableInfo) {
           if (isString(value) && (value.includes("cdn.bubble.io") || value.includes("s3.amazonaws.com"))) {
             const hash = crypto.createHash("md5").update(value).digest("hex");
             await filesCollection.updateOne(
-              { urlHash: hash, fileUrl: value },
+              { urlHash: hash, fileUrl: value, appName: tableInfo.APP_NAME },
               { $set: { fileUrl: value } },
               { upsert: true }
             );
@@ -70,6 +70,12 @@ async function backupTableData(db, tableInfo) {
       totalFetched += results.length;
       cursor += constants.LIMIT;
       hasMore = response.data.response.remaining > 0;
+
+      if (updateProgress) {
+        const progress = Math.round((totalFetched / (totalFetched + response.data.response.remaining)) * 100);
+        await updateProgress(progress);
+      }
+
 
       if (!hasMore) {
         logger.info(
