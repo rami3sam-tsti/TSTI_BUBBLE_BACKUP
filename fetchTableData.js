@@ -1,3 +1,4 @@
+require("dotenv").config();
 const axios = require("axios");
 const { isString } = require("./utils");
 const crypto = require("crypto");
@@ -8,6 +9,7 @@ async function fetchTableData(db, table, config) {
   const currentDatetime = new Date();
   const metadataCollection = db.collection("metadata");
   const filesCollection = db.collection("files");
+  const API_KEY = process.env[`${config.APP_NAME}_API_KEY`];
 
   let tableMetadata = await metadataCollection.findOne({ table });
 
@@ -24,8 +26,8 @@ async function fetchTableData(db, table, config) {
 
   while (hasMore) {
     try {
-      const response = await axios.get(`${config.BASE_URL}${table}`, {
-        headers: { Authorization: `Bearer ${config.API_KEY}` },
+      const response = await axios.get(`${config.BASE_URL}/api/1.1/obj/${table}`, {
+        headers: { Authorization: `Bearer ${API_KEY}` },
         params: {
           cursor,
           limit: constants.LIMIT,

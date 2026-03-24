@@ -12,12 +12,6 @@ const bullBoardRoutes = require("./routes/bullBoardRoutes");
 dotenv.config();
 debugger
 
-// Add API keys and update base URL
-for (const conf of config) {
-  conf.API_KEY = process.env[`${conf.APP_NAME}_API_KEY`];
-  conf.BASE_URL = `${conf.BASE_URL}/api/1.1/obj/`;
-}
-
 
 // async function pullAllFiles() {
 //   try {
