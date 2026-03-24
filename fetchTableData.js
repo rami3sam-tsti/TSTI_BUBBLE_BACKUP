@@ -5,28 +5,28 @@ const crypto = require("crypto");
 const logger = require("./logger");
 const constants = require("./constants");
 
-async function fetchTableData(db, table, config) {
+async function backupTableData(db, tableInfo) {
   const currentDatetime = new Date();
   const metadataCollection = db.collection("metadata");
   const filesCollection = db.collection("files");
-  const API_KEY = process.env[`${config.APP_NAME}_API_KEY`];
+  const API_KEY = process.env[`${tableInfo.APP_NAME}_API_KEY`];
 
-  let tableMetadata = await metadataCollection.findOne({ table });
+  let tableMetadata = await metadataCollection.findOne({ table: tableInfo.TABLE_NAME });
 
 
   if (!tableMetadata) {
-    tableMetadata = { table, lastModifiedDate: new Date(0).toISOString() };
+    tableMetadata = { table: tableInfo.TABLE_NAME, lastModifiedDate: new Date(0).toISOString() };
     await metadataCollection.insertOne(tableMetadata);
   }
 
-  const collection = db.collection(table);
+  const collection = db.collection(tableInfo.TABLE_NAME);
   let cursor = 0;
   let totalFetched = 0;
   let hasMore = true;
 
   while (hasMore) {
     try {
-      const response = await axios.get(`${config.BASE_URL}/api/1.1/obj/${table}`, {
+      const response = await axios.get(`${tableInfo.BASE_URL}/api/1.1/obj/${tableInfo.TABLE_NAME}`, {
         headers: { Authorization: `Bearer ${API_KEY}` },
         params: {
           cursor,
@@ -73,10 +73,10 @@ async function fetchTableData(db, table, config) {
 
       if (!hasMore) {
         logger.info(
-          `[${config.APP_NAME} - ${table}] All data fetched! Total records: ${totalFetched}`
+          `[${tableInfo.APP_NAME} - ${tableInfo.TABLE_NAME}] All data fetched! Total records: ${totalFetched}`
         );
         await metadataCollection.updateOne(
-          { table },
+          { table: tableInfo.TABLE_NAME },
           { $set: { lastModifiedDate: currentDatetime.toISOString() } }
         );
       }
@@ -87,4 +87,4 @@ async function fetchTableData(db, table, config) {
   }
 }
 
-module.exports = fetchTableData;
+module.exports = backupTableData;

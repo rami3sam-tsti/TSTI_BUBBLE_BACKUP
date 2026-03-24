@@ -7,14 +7,15 @@ const worker = new Worker(
   constants.BACKUP_QUEUE_NAME,
   async (job) => {
     logger.info(`Processing job: ${job.name}, ${job.data}`);
-    const tableInfo = job.data.tableInfo;
+    const config = job.data.config;
 
     await client.connect();
-    const db = client.db(tableInfo.APP_NAME);
-    logger.info(`Fetching data for table: ${tableInfo}`);
+    const db = client.db(config.APP_NAME);
+    logger.info(`Fetching data for table: ${config}`);
 
-    await fetchTableData(db, tableInfo);
-
+    for (const table of config.TABLES) {
+      await fetchTableData(db, table, config);
+    }
   },
   {
     connection: {

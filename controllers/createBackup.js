@@ -1,4 +1,4 @@
-const backupQueue  = require("../queues/backup/backupQueue");
+const backupQueue = require("../queues/backup/backupQueue");
 const config = require("../config");
 
 const createBackup = async (req, res) => {
@@ -7,9 +7,11 @@ const createBackup = async (req, res) => {
         const appConfig = config.find(c => c.APP_NAME === appName)
         if (!appConfig) throw new Error("App configuration not found");
 
-        await backupQueue.add(`backup:${appName}`, {
-            config: appConfig
-        });
+        for (const table of appConfig.TABLES) {
+            await backupQueue.add(`backup:${appName}`, {
+                tableInfo: { ...appConfig, TABLE_NAME: table }
+            });
+        }
 
         res.send("Backup started!");
     } catch (error) {

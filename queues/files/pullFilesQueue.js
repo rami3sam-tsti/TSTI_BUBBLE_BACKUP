@@ -2,11 +2,11 @@
 const { Queue } = require("bullmq");
 const constants = require("../../constants");
 
-const backupQueue = new Queue(constants.BACKUP_QUEUE_NAME, {
+const pullFileQueue = new Queue(constants.PULL_FILE_QUEUE_NAME, {
   connection: {
     host: constants.REDIS_HOST,
     port: constants.REDIS_PORT,
   },
 });
 
-module.exports = backupQueue
+module.exports = pullFileQueue
